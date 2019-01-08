@@ -1,13 +1,14 @@
 require('./config/config');
-var {ObjectID} = require('mongodb');
-var {mongoose} = require('./db/mongodb.js');
-var {note} = require('./models/notes.js');
-var {user} = require('./models/users.js');
-var {authenticate} = require('./middleware/authenticate.js');
+const {ObjectID} = require('mongodb');
+const {mongoose} = require('./db/mongodb.js');
+const {note} = require('./models/notes.js');
+const {user} = require('./models/users.js');
+const {bioData} = require('./models/bioData')
+const {authenticate} = require('./middleware/authenticate.js');
 const express  = require('express');
 const bodyParser  = require('body-parser');
 const port = process.env.PORT;
-var app = express();
+const app = express();
 
 app.use(bodyParser.json());
 
@@ -123,10 +124,78 @@ app.post('/users', (req, res) => {
  });
 
 app.delete('/users/logout', authenticate, (req, res) => {
+    console.log(req.params);
   req.user.removeToken(req.param('token')).then(() => {
     res.status(200).send();
   }, () => {
     res.status(401).send();
+  });
+});
+app.post('/users/bioData', authenticate, (req, res) => {
+  let b = new bioData(
+      {
+        firstName : req.body.firstName,
+        lastName : req.body.lastName,
+        gen : req.body.gen,
+        address : req.body.address,
+        dob : req.body.dob,
+        countryId : req.body.countryId,
+        stateId : req.body.stateId,
+        city : req.body.city,
+        mno : req.body.mno,
+        hobby : req.body.hobby,
+        _creator : req.user._id
+      }
+  );
+    bioData.findOne({
+        _creator : req.user._id
+    }).then((data) => {
+        if(data){
+            bioData.findOneAndUpdate(
+                {
+                    _id : data._id,
+                    _creator : req.user._id
+                },
+                {
+                    $set:{
+                        firstName : req.body.firstName,
+                        lastName : req.body.lastName,
+                        gen : req.body.gen,
+                        address : req.body.address,
+                        dob : req.body.dob,
+                        countryId : req.body.countryId,
+                        stateId : req.body.stateId,
+                        city : req.body.city,
+                        mno : req.body.mno,
+                        hobby : req.body.hobby,
+                    }
+                },{returnNewDocument:true}).then((note) => {
+                res.send({note});
+            }, (e) => {
+                return res.status(400).send(e);
+            });
+        }
+        else
+        {
+            b.save().then((row) => {
+                res.send(row);
+            }, (err) => {
+                res.status(400).send(err);
+            });
+        }
+    }).catch((err)=>{
+        console.log(err);
+    });
+
+});
+app.get('/users/bioData', authenticate, (req, res) => {
+  bioData.findOne({
+    _creator : req.user._id
+  }).then((data) => {
+    if(data)
+      res.send({data});
+  }).catch( (e) => {
+    return res.status(400).send(e);
   });
 });
 
