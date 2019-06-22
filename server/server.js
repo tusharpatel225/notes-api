@@ -8,8 +8,9 @@ const {authenticate} = require('./middleware/authenticate.js');
 const express  = require('express');
 const bodyParser  = require('body-parser');
 const port = process.env.PORT;
+const cors = require('cors');
 const app = express();
-
+app.use(cors());
 
 app.all('*', function(req, res, next) {
      var origin = req.get('origin');
