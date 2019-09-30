@@ -12,13 +12,6 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 
-app.all('*', function(req, res, next) {
-     var origin = req.get('origin');
-     res.header('Access-Control-Allow-Origin', origin);
-     res.header("Access-Control-Allow-Headers", "X-Requested-With");
-     res.header('Access-Control-Allow-Headers', 'Content-Type');
-     next();
-});
 app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
@@ -133,7 +126,6 @@ app.post('/users', (req, res) => {
  });
 
 app.delete('/users/logout', authenticate, (req, res) => {
-    console.log(req.params);
   req.user.removeToken(req.param('token')).then(() => {
     res.status(200).send();
   }, () => {
@@ -181,7 +173,7 @@ app.post('/users/bioData', authenticate, (req, res) => {
                 },{returnNewDocument:true}).then((note) => {
                 res.send({note});
             }, (e) => {
-                return res.status(400).send(e);
+                return res.status(500).send(e);
             });
         }
         else
@@ -189,11 +181,11 @@ app.post('/users/bioData', authenticate, (req, res) => {
             b.save().then((row) => {
                 res.send(row);
             }, (err) => {
-                res.status(400).send(err);
+                res.status(500).send(err);
             });
         }
     }).catch((err)=>{
-        console.log(err);
+        return res.status(500).send();
     });
 
 });
@@ -201,7 +193,6 @@ app.get('/users/bioData', authenticate, (req, res) => {
   bioData.findOne({
     _creator : req.user._id
   }).then((data) => {
-    if(data)
       res.send({data});
   }).catch( (e) => {
     return res.status(400).send(e);
